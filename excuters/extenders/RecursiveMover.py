@@ -8,10 +8,12 @@ from excuters.FileOperationStrategy import FileOperationStrategy
 class RecursiveMover(FileOperationStrategy):
     """递归移出策略"""
 
-    def execute(self, root_dir, keyword, pattern, target_dir=None) -> List[Path]:
+    def execute(self, root_dir, start_keyword, end_keyword, include_keywords, recursive, target_dir=None) -> List[Path]:
         try:
             self.log("开始递归移动操作...")
-            matched_files = self.find_files(root_dir, keyword, pattern)
+            matched_files = FileOperationStrategy.find_files(
+                root_dir, start_keyword, end_keyword, include_keywords, recursive
+            )
 
             if not matched_files:
                 self.log("未找到匹配文件", "warning")

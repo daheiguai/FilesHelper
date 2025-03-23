@@ -23,9 +23,9 @@ class BatchMoveTab(OperationTab):
         target_frame.pack(pady=5)
         self.target_dir = None
 
-    def _browse_target(self, tk=None):
+    def _browse_target(self):  # 删除错误的tk参数
         path = filedialog.askdirectory()
         if path:
-            self.target_entry.delete(0, tk.END)
+            self.target_entry.delete(0, tk.END)  # 使用正确的tk引用
             self.target_entry.insert(0, path)
             self.target_dir = Path(path)

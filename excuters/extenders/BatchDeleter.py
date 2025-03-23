@@ -7,10 +7,12 @@ from excuters.FileOperationStrategy import FileOperationStrategy
 class BatchDeleter(FileOperationStrategy):
     """批量删除策略"""
 
-    def execute(self, root_dir, keyword, pattern, target_dir=None) -> List[Path]:
+    def execute(self, root_dir, start_keyword, end_keyword, include_keywords, recursive, target_dir=None) -> List[Path]:
         try:
             self.log("开始批量删除操作...")
-            matched_files = self.find_files(root_dir, keyword, pattern)
+            matched_files = FileOperationStrategy.find_files(
+                root_dir, start_keyword, end_keyword, include_keywords, recursive
+            )
 
             for idx, file in enumerate(matched_files, 1):
                 file.unlink()

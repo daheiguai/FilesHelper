@@ -8,13 +8,16 @@ from excuters.FileOperationStrategy import FileOperationStrategy
 class BatchMover(FileOperationStrategy):
     """批量移动策略"""
 
-    def execute(self, root_dir, keyword, pattern, target_dir) -> List[Path]:
+    def execute(self, root_dir, start_keyword, end_keyword, include_keywords, recursive, target_dir) -> List[Path]:
         try:
             self.log("开始批量移动操作...")
+
             if not target_dir.exists():
                 target_dir.mkdir(parents=True)
 
-            matched_files = self.find_files(root_dir, keyword, pattern)
+            matched_files = FileOperationStrategy.find_files(
+                root_dir, start_keyword, end_keyword, include_keywords, recursive
+            )
 
             for idx, file in enumerate(matched_files, 1):
                 dest = target_dir / file.name
