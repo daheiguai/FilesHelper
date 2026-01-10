@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinters.extenders.BatchDeleteTab import BatchDeleteTab
 from tkinters.extenders.BatchMoveTab import BatchMoveTab
+from tkinters.extenders.CopyDirStructureTab import CopyDirStructureTab
 from tkinters.extenders.RecursiveMoveTab import RecursiveMoveTab
 
 class FileHelper(tk.Tk):
@@ -19,7 +20,8 @@ class FileHelper(tk.Tk):
         tabs = [
             RecursiveMoveTab(notebook),
             BatchMoveTab(notebook),
-            BatchDeleteTab(notebook)
+            BatchDeleteTab(notebook),
+            CopyDirStructureTab(notebook)
         ]
 
         for tab in tabs:

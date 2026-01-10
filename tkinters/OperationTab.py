@@ -4,11 +4,14 @@ from tkinter import ttk, filedialog, messagebox, scrolledtext
 import tkinter as tk
 import threading
 
-from util.constant import DEFAULT_ROOT_DIR, PATTERN_OPTIONS, LOG_COLORS
+from util.ValidUitl import valid_or_none
+from util.constant import DEFAULT_ROOT_DIR, PATTERN_TABLE_TYPE, LOG_COLORS
 
 
 class OperationTab(ttk.Frame):
-    """操作标签页基类"""
+    """操作标签页基类
+    通用模板，被页面调用
+    """
 
     def __init__(self, master, tab_name):
         super().__init__(master)
@@ -28,19 +31,31 @@ class OperationTab(ttk.Frame):
         ttk.Button(dir_frame, text="浏览...", command=self._browse_dir).pack(side=tk.LEFT)
         dir_frame.pack(pady=5)
 
+        #基础模式设置,如果PATTERN_TABLE_TYPE包含tab_name则加载
+        if self.tab_name in PATTERN_TABLE_TYPE:
+            self._init_pattern_ui()
+
+        # 日志区域
+        self.log_area = scrolledtext.ScrolledText(self, height=10)
+        self.log_area.pack(fill=tk.BOTH, expand=True)
+
+        # 初始化日志样式
+        for level, color in LOG_COLORS.items():
+            self.log_area.tag_config(f"log_{level}", foreground=color)
+
+    def _init_pattern_ui(self):
+        """文件移动基础页面的功能加载"""
         # 添加递归复选框
         recursive_frame = ttk.Frame(self)
-        self.recursive_var = tk.BooleanVar(value=True)  # 默认勾选
+        self.recursive_var = tk.BooleanVar(value=False)  # 默认不勾选
         ttk.Checkbutton(
             recursive_frame,
             text="递归搜索子目录",
             variable=self.recursive_var
         ).pack(side=tk.LEFT)
         recursive_frame.pack(pady=5)
-
         # 匹配模式设置
         mode_frame = ttk.Frame(self)
-
         # 以关键字开头
         start_frame = ttk.Frame(mode_frame)
         self.start_var = tk.BooleanVar()
@@ -48,7 +63,8 @@ class OperationTab(ttk.Frame):
         self.start_entry = ttk.Entry(start_frame, width=15, state=tk.DISABLED)
         self.start_check.pack(side=tk.LEFT)
         self.start_entry.pack(side=tk.LEFT, padx=5)
-        ttk.Label(start_frame, text="以关键字开头").pack(side=tk.LEFT)
+        self.header_text = ttk.Label(start_frame, text="以关键字开头")
+        self.header_text.pack(side=tk.LEFT)
         start_frame.pack(anchor=tk.W)
 
         # 以关键字结尾
@@ -58,7 +74,8 @@ class OperationTab(ttk.Frame):
         self.end_entry = ttk.Entry(end_frame, width=15, state=tk.DISABLED)
         self.end_check.pack(side=tk.LEFT)
         self.end_entry.pack(side=tk.LEFT, padx=5)
-        ttk.Label(end_frame, text="以关键字结尾").pack(side=tk.LEFT)
+        self.end_text = ttk.Label(end_frame, text="以关键字结尾")
+        self.end_text.pack(side=tk.LEFT)
         end_frame.pack(anchor=tk.W)
 
         # 包含关键字
@@ -68,7 +85,8 @@ class OperationTab(ttk.Frame):
         self.include_entry = ttk.Entry(include_frame, width=30, state=tk.DISABLED)
         self.include_check.pack(side=tk.LEFT)
         self.include_entry.pack(side=tk.LEFT, padx=5)
-        ttk.Label(include_frame, text="包含关键字（用;分隔）").pack(side=tk.LEFT)
+        self.contanin_taxt = ttk.Label(include_frame, text="包含关键字（用;分隔）")
+        self.contanin_taxt.pack(side=tk.LEFT)
         include_frame.pack(anchor=tk.W)
 
         # 提示标签
@@ -84,14 +102,6 @@ class OperationTab(ttk.Frame):
         self.include_var.trace_add("write", self._toggle_entry_state)
 
         mode_frame.pack(pady=5)
-
-        # 日志区域
-        self.log_area = scrolledtext.ScrolledText(self, height=10)
-        self.log_area.pack(fill=tk.BOTH, expand=True)
-
-        # 初始化日志样式
-        for level, color in LOG_COLORS.items():
-            self.log_area.tag_config(f"log_{level}", foreground=color)
 
     def _toggle_entry_state(self, *args):
         """根据复选框状态切换输入框可用性"""
@@ -131,6 +141,9 @@ class OperationTab(ttk.Frame):
             self.dir_entry.insert(0, path)
 
     def _validate_inputs(self) -> bool:
+
+        if self.tab_name not in PATTERN_TABLE_TYPE:
+            return True
         # 检查基础输入
         if not self.dir_entry.get():
             messagebox.showerror("错误", "必须选择根目录")
@@ -166,22 +179,24 @@ class OperationTab(ttk.Frame):
             root_dir = Path(self.dir_entry.get())
             recursive = self.recursive_var.get()
 
-            # 获取输入参数
-            start_kw = self.start_entry.get().strip() if self.start_var.get() else None
-            end_kw = self.end_entry.get().strip() if self.end_var.get() else None
-            include_kws = [kw.strip() for kw in self.include_entry.get().split(';')
-                           if self.include_var.get() and kw.strip()]
+            start_kw, end_kw, include_kws = None, None, None
+            if self.tab_name in PATTERN_TABLE_TYPE:
+                # 获取输入参数
+                start_kw = self.start_entry.get().strip() if self.start_var.get() else None
+                end_kw = self.end_entry.get().strip() if self.end_var.get() else None
+                include_kws = [kw.strip() for kw in self.include_entry.get().split(';')
+                               if self.include_var.get() and kw.strip()]
 
-            # 验证至少选择一种模式
-            if not any([self.start_var.get(), self.end_var.get(), self.include_var.get()]):
-                messagebox.showerror("错误", "至少需要选择一种匹配模式")
-                return
+                 # 验证至少选择一种模式
+                if not any([self.start_var.get(), self.end_var.get(), self.include_var.get()]):
+                    messagebox.showerror("错误", "至少需要选择一种匹配模式")
+                    return
 
             processed_files = self.strategy.execute(
                 root_dir=root_dir,
-                start_keyword=start_kw,
-                end_keyword=end_kw,
-                include_keywords=include_kws,
+                start_keyword=valid_or_none(start_kw),
+                end_keyword=valid_or_none(end_kw),
+                include_keywords=valid_or_none(include_kws),
                 recursive=recursive,
                 target_dir=getattr(self, "target_dir", None)
             )
