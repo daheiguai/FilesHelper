@@ -177,17 +177,17 @@ class OperationTab(ttk.Frame):
     def _execute_operation(self):
         try:
             root_dir = Path(self.dir_entry.get())
-            recursive = self.recursive_var.get()
 
-            start_kw, end_kw, include_kws = None, None, None
+            recursive,start_kw, end_kw, include_kws = None, None, None,None
             if self.tab_name in PATTERN_TABLE_TYPE:
+                recursive = self.recursive_var.get()
                 # 获取输入参数
                 start_kw = self.start_entry.get().strip() if self.start_var.get() else None
                 end_kw = self.end_entry.get().strip() if self.end_var.get() else None
                 include_kws = [kw.strip() for kw in self.include_entry.get().split(';')
                                if self.include_var.get() and kw.strip()]
 
-                 # 验证至少选择一种模式
+                # 验证至少选择一种模式
                 if not any([self.start_var.get(), self.end_var.get(), self.include_var.get()]):
                     messagebox.showerror("错误", "至少需要选择一种匹配模式")
                     return
