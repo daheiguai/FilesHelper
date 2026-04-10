@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import os
 from excuters.FileOperationStrategy import FileOperationStrategy
 
 
@@ -42,8 +43,15 @@ class FolderSplitter(FileOperationStrategy):
         if num_folders < 1:
             raise ValueError("文件夹数量必须大于0")
 
-        # 获取所有文件（不包括子目录）
-        all_files = [f for f in root_dir.iterdir() if f.is_file()]
+        # 使用 os.scandir() 优化文件扫描性能
+        all_files = []
+        try:
+            with os.scandir(root_dir) as entries:
+                for entry in entries:
+                    if entry.is_file(follow_symlinks=False):
+                        all_files.append(Path(entry.path))
+        except PermissionError as e:
+            raise PermissionError(f"没有权限访问目录: {root_dir}") from e
 
         if not all_files:
             self.log("目标目录中没有文件", "warning")

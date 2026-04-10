@@ -70,14 +70,17 @@ class FolderSplitTab(OperationTab):
             num_folders = int(self.num_entry.get())
             prefix = self.prefix_entry.get().strip()
 
-            # 确认操作
-            all_files = [f for f in root_dir.iterdir() if f.is_file()]
-            if not all_files:
-                messagebox.showwarning("警告", "目标目录中没有文件")
+            # 确认操作 - 先检查目录是否存在
+            if not root_dir.exists():
+                messagebox.showerror("错误", "目标目录不存在")
+                return
+
+            if not root_dir.is_dir():
+                messagebox.showerror("错误", "选择的路径不是目录")
                 return
 
             confirm_msg = (
-                f"即将把 {len(all_files)} 个文件分配到 {num_folders} 个文件夹中\n"
+                f"即将把文件分配到 {num_folders} 个文件夹中\n"
                 f"文件夹命名: {prefix}-1, {prefix}-2, ..., {prefix}-{num_folders}\n"
                 f"确定要继续吗？"
             )
